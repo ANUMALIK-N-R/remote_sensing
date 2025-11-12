@@ -77,7 +77,7 @@ n_steps = st.sidebar.number_input("LSTM Lookback (training window)", 1, 10, N_ST
 
 def load_lstm_model_and_scaler(district, crop, metric):
     # Map display names to file-safe keys
-    district_aliases = {"Thiruvananthapuram": "tvm", "Ernakulam": "ekm", "Kannur": "kannur"}
+    district_aliases = {"Thiruvananthapuram": "tvm", "Alappuzha": "alp", "Kannur": "kannur"}
     crop_aliases = {"Paddy": "paddy", "Banana": "banana", "Rubber": "rubber"}
 
     d_key = district_aliases.get(district, district.lower())
