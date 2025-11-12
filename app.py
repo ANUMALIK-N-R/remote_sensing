@@ -22,7 +22,7 @@ st.set_page_config(page_title="🌾 LSTM Crop Forecast", layout="wide")
 # CONFIGURATION
 # ---------------------------
 
-DATA_PATH = os.path.join("data", "District_wise_Crop_Statistics_1952_2023.csv")
+DATA_PATH = os.path.join("data", "District wise Crop Statistics from 1952-53 to 2023-24.csv")
 MODELS_DIR = "models"
 N_STEPS_DEFAULT = 3  # Lookback window used in training
 
