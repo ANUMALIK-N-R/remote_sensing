@@ -24,7 +24,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 st.set_page_config(page_title="Crop Forecast (LSTM)", layout="wide")
 
 # ---------------- CONFIG ----------------
-DATA_FILENAME = os.path.join("data", "District_wise_Crop_Statistics_from_1952_53_to_2023_24.csv")
+DATA_FILENAME = os.path.join("data", "District wise Crop Statistics from 1952-53 to 2023-24.csv")
 # if your file has a different name, change DATA_FILENAME accordingly
 
 MODELS_DIR = os.path.join("models")
