@@ -76,23 +76,28 @@ n_steps = st.sidebar.number_input("LSTM Lookback (training window)", 1, 10, N_ST
 # ---------------------------
 
 def load_lstm_model_and_scaler(district, crop, metric):
-    model_file = f"{district}_{crop}_{metric}_lstm.h5"
-    scaler_file = f"{district}_{crop}_{metric}_scaler.pkl"
+    # Map display names to file-safe keys
+    district_aliases = {"Thiruvananthapuram": "tvm", "Ernakulam": "ekm", "Kannur": "kannur"}
+    crop_aliases = {"Paddy": "paddy", "Banana": "banana", "Rubber": "rubber"}
 
-    model_path = os.path.join(MODELS_DIR, model_file)
-    scaler_path = os.path.join(MODELS_DIR, scaler_file)
+    d_key = district_aliases.get(district, district.lower())
+    c_key = crop_aliases.get(crop, crop.lower())
+    m_key = metric.lower()
+
+    model_path = os.path.join("models", f"{d_key}_{c_key}_{m_key}_lstm.h5")
+    scaler_path = os.path.join("models", f"{d_key}_{c_key}_{m_key}_scaler.pkl")
 
     if not os.path.exists(model_path) or not os.path.exists(scaler_path):
         st.error(f"❌ Model or scaler not found for {district}-{crop}-{metric}")
         st.stop()
 
-    model = load_model(model_path)
+    # ✅ FIX: Load model without compiling
+    model = load_model(model_path, compile=False)
+
+    # Load corresponding scaler
     scaler = joblib.load(scaler_path)
+
     return model, scaler
-
-model, scaler = load_lstm_model_and_scaler(district, crop, metric)
-st.success(f"✅ Loaded model for {district.upper()} - {crop.capitalize()} ({metric.capitalize()})")
-
 # ---------------------------
 # FORECAST FUNCTION
 # ---------------------------
