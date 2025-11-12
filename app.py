@@ -96,6 +96,7 @@ df = df[df["District"].isin(ALLOWED_DISTRICTS) & df["Crop"].isin(ALLOWED_CROPS)]
 district_choice = st.sidebar.selectbox("Select District", ALLOWED_DISTRICTS)
 crop_choice = st.sidebar.selectbox("Select Crop", ALLOWED_CROPS)
 metric_choice = st.sidebar.radio("Metric", ALLOWED_METRICS, index=1)
+n_steps=3
 
 last_year = int(df["Year"].max())
 forecast_year = st.sidebar.slider("Forecast up to year", last_year + 1, last_year + 20, last_year + 3)
