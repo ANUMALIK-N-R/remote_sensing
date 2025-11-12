@@ -1,12 +1,9 @@
 # app.py
 """
 Streamlit app to forecast crop time-series using pre-trained LSTM models.
-Assumes:
- - CSV at ./data/District wise Crop Statistics from 1952-53 to 2023-24.csv
- - Pretrained models + scalers in ./models/ named:
-     {district_key}_{crop_key}_{metric_key}_lstm.h5
-     {district_key}_{crop_key}_{metric_key}_scaler.pkl
-   where key = name.strip().lower().replace(' ', '_')
+Compatible with model names like:
+  Alappuzha_Banana_Area_lstm.h5
+  Alappuzha_Banana_Area_scaler.pkl
 """
 
 import streamlit as st
@@ -27,21 +24,16 @@ DATA_FILENAME = os.path.join("data", "District wise Crop Statistics from 1952-53
 MODELS_DIR = os.path.join("models")
 N_STEPS_DEFAULT = 3
 
-# Supported combinations (you have only these)
 ALLOWED_DISTRICTS = ["Thiruvananthapuram", "Alappuzha", "Kannur"]
 ALLOWED_CROPS = ["Paddy", "Banana", "Rubber"]
 ALLOWED_METRICS = ["Area", "Production", "Productivity"]
 
 # ---------------- HELPERS ----------------
-def key_for_name(s: str) -> str:
-    """Normalize a name for filename matching."""
-    return str(s).strip().lower().replace(" ", "_")
-
 def load_csv(path):
     return pd.read_csv(path)
 
 def preprocess_df(df):
-    """Simplified cleaning + Year derivation."""
+    """Simplify cleaning and derive Year."""
     df = df.copy()
     df.columns = [c.strip() for c in df.columns]
     for c in ["District", "Crop"]:
@@ -56,10 +48,10 @@ def preprocess_df(df):
 
     return df
 
-def safe_load_model_and_scaler(district_key, crop_key, metric_key):
-    """Load model + scaler if they exist."""
-    model_fname = f"{district_key}_{crop_key}_{metric_key}_lstm.h5"
-    scaler_fname = f"{district_key}_{crop_key}_{metric_key}_scaler.pkl"
+def safe_load_model_and_scaler(district, crop, metric):
+    """Load model & scaler for given combination using ProperCase filenames."""
+    model_fname = f"{district}_{crop}_{metric}_lstm.h5"
+    scaler_fname = f"{district}_{crop}_{metric}_scaler.pkl"
     model_path = os.path.join(MODELS_DIR, model_fname)
     scaler_path = os.path.join(MODELS_DIR, scaler_fname)
 
@@ -88,7 +80,7 @@ def forecast_with_model(model, scaler, series_values, n_steps, horizon):
     return preds
 
 # ---------------- UI ----------------
-st.title("🌾 Crop Time-Series Forecast (LSTM)")
+st.title("🌾 Crop Forecast (LSTM)")
 st.markdown("Forecast Area, Production, or Productivity using pretrained LSTM models.")
 
 # Load data
@@ -97,11 +89,9 @@ if not os.path.exists(DATA_FILENAME):
     st.stop()
 
 df = preprocess_df(load_csv(DATA_FILENAME))
-
-# Filter to only available (trained) combinations
 df = df[df["District"].isin(ALLOWED_DISTRICTS) & df["Crop"].isin(ALLOWED_CROPS)]
 
-# Sidebar selections
+# Sidebar
 district_choice = st.sidebar.selectbox("Select District", ALLOWED_DISTRICTS)
 crop_choice = st.sidebar.selectbox("Select Crop", ALLOWED_CROPS)
 metric_choice = st.sidebar.radio("Metric", ALLOWED_METRICS, index=1)
@@ -110,7 +100,7 @@ n_steps = st.sidebar.number_input("Lookback steps (used during training)", 1, 10
 last_year = int(df["Year"].max())
 forecast_year = st.sidebar.slider("Forecast up to year", last_year + 1, last_year + 20, last_year + 3)
 
-# Subset data
+# Filter historical data
 subset = df[(df["District"] == district_choice) & (df["Crop"] == crop_choice)].dropna(subset=[metric_choice])
 subset = subset.sort_values("Year")
 
@@ -124,19 +114,15 @@ values = subset[metric_choice].values
 st.subheader(f"📈 Historical {metric_choice}: {crop_choice} ({district_choice})")
 st.line_chart(pd.DataFrame({metric_choice: values}, index=years))
 
-# Load model and scaler
-district_key = key_for_name(district_choice)
-crop_key = key_for_name(crop_choice)
-metric_key = key_for_name(metric_choice)
-
-model, scaler, model_path, scaler_path = safe_load_model_and_scaler(district_key, crop_key, metric_key)
+# Load model
+model, scaler, model_path, scaler_path = safe_load_model_and_scaler(district_choice, crop_choice, metric_choice)
 if model is None or scaler is None:
-    st.error(f"No trained model found for {district_choice}-{crop_choice}-{metric_choice}")
+    st.error(f"❌ Model or scaler not found for {district_choice}-{crop_choice}-{metric_choice}")
     st.write("Expected model:", model_path)
     st.write("Expected scaler:", scaler_path)
     st.stop()
 
-st.success(f"Loaded model: {os.path.basename(model_path)}")
+st.success(f"✅ Loaded model: {os.path.basename(model_path)}")
 
 # Run forecast
 if st.button("Run Forecast"):
@@ -166,6 +152,6 @@ if st.button("Run Forecast"):
     st.download_button(
         "Download Forecast CSV",
         forecast_df.to_csv(index=False).encode("utf-8"),
-        file_name=f"forecast_{district_key}_{crop_key}_{metric_key}.csv",
+        file_name=f"forecast_{district_choice}_{crop_choice}_{metric_choice}.csv",
         mime="text/csv"
     )
