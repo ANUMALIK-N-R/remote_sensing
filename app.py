@@ -72,7 +72,8 @@ def forecast_with_model(model, scaler, series_values, n_steps, horizon):
     for _ in range(horizon):
         yhat = model.predict(last_seq, verbose=0)
         preds_scaled.append(yhat[0, 0])
-        last_seq = np.append(last_seq[:, 1:, :], [[yhat]], axis=1)
+        # correct dimension handling
+        last_seq = np.append(last_seq[:, 1:, :], yhat.reshape(1, 1, 1), axis=1)
 
     preds_scaled = np.array(preds_scaled).reshape(-1, 1)
     preds_log = scaler.inverse_transform(preds_scaled)
